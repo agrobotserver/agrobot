@@ -3,7 +3,6 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
 
-print("ESTOY CORRIENDO BOT.PY NUEVO 🔥")
 
 # OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
