@@ -1,5 +1,9 @@
-import telebot
-import openai
+import os
+from telegram import Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from openai import OpenAI
+
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
