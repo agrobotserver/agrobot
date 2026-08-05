@@ -1,6 +1,6 @@
-import telebot
+import os
 
-TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
+TOKEN = os.environ.get("8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g")
 
 bot = telebot.TeleBot(TOKEN)
 
