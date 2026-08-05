@@ -1,16 +1,15 @@
 import telebot
 
-TOKEN = os.environ.get("8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g")
+TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
 
 bot = telebot.TeleBot(TOKEN)
 
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    bot.reply_to(message, "🌱 Hola, soy tu asistente agrícola Agrobot")
+def start(message):
+    bot.reply_to(message, "🌱 Hola, soy Agrobot \n Estoy listo para ayudarte con información agrícola.")
 
 @bot.message_handler(func=lambda message: True)
-def echo_all(message):
-    bot.reply_to(message, "Recibí tu mensaje: " + message.text)
+def echo(message):
+    bot.reply_to(message, message.text)
 
-print("Bot corriendo...")
-bot.polling()
+bot.infinity_polling()
