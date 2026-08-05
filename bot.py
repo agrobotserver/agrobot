@@ -3,24 +3,24 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
 
-# API OpenAI
+# OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Token Telegram
+# Token
 TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
 
-# Comando /start
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🌱 Hola, soy el asistente agrícola de FRUTIPAZ. ¿En qué puedo ayudarte?")
+    await update.message.reply_text("🌱 Hola, soy el asistente agrícola de Agrobot. ¿En qué puedo ayudarte?")
 
-# Mensajes normales
+# Mensajes
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text
 
     response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "Eres un asistente técnico agrícola para campesinos, das respuestas claras y prácticas."},
+            {"role": "system", "content": "Eres un asistente agrícola experto, ayudas a campesinos con diagnósticos y recomendaciones prácticas."},
             {"role": "user", "content": user_message}
         ]
     )
@@ -28,7 +28,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     reply = response.choices[0].message.content
     await update.message.reply_text(reply)
 
-# Main
+# App
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
