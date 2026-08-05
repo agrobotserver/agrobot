@@ -1,37 +1,37 @@
 import os
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, filters, ContextTypes
 from openai import OpenAI
 
+# API OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
+# Token Telegram
+TOKEN = "TU_TOKEN_AQUI"
 
-bot = telebot.TeleBot(TOKEN)
-openai.api_key = OPENAI_KEY
+# Comando /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("🌱 Hola, soy el asistente agrícola de FRUTIPAZ. ¿En qué puedo ayudarte?")
 
-@bot.message_handler(commands=['start'])
-def start(message):
-    bot.reply_to(message, "🌱 Hola, soy Agrobot 🤖\nPregúntame sobre cultivos, plagas o agricultura.")
+# Mensajes normales
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_message = update.message.text
 
-@bot.message_handler(func=lambda message: True)
-def responder(message):
-    user_text = message.text
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "Eres un asistente técnico agrícola para campesinos, das respuestas claras y prácticas."},
+            {"role": "user", "content": user_message}
+        ]
+    )
 
-    try:
-        respuesta = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "Eres un experto en agricultura que ayuda a agricultores con consejos claros y prácticos."},
-                {"role": "user", "content": user_text}
-            ]
-        )
+    reply = response.choices[0].message.content
+    await update.message.reply_text(reply)
 
-        texto = respuesta['choices'][0]['message']['content']
-        bot.reply_to(message, texto)
+# Main
+app = ApplicationBuilder().token(TOKEN).build()
 
-    except Exception as e:
-        bot.reply_to(message, "⚠️ Error con la IA")
+app.add_handler(CommandHandler("start", start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-bot.infinity_polling()
+app.run_polling()
