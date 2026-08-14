@@ -111,8 +111,35 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user_message = update.message.text
+    user_message = update.message.text.strip()
+    user_message_lower = user_message.lower()
 
+    # Saludos
+    greetings = [
+        "hola",
+        "hola!",
+        "hola!",
+        "buenas",
+        "buenos dias",
+        "buenos días",
+        "buenas tardes",
+        "buenas noches",
+        "hey",
+        "hello",
+        "holaa",
+        "holaaa"
+    ]
+
+    if user_message_lower in greetings:
+        await update.message.reply_text(
+            "🌱 ¡Hola! Soy AgroBot, tu asistente agrícola inteligente.\n\n"
+            "Puedo ayudarte con cultivos, riego, plagas y recomendaciones agrícolas.\n\n"
+            "Selecciona una opción o escríbeme directamente tu pregunta:",
+            reply_markup=main_menu(),
+        )
+        return
+
+    # Consulta a OpenAI
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
