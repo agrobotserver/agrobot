@@ -4,10 +4,8 @@ from telegram.ext import ApplicationBuilder, CommandHandler, MessageHandler, fil
 from openai import OpenAI
 
 
-# OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Token
 TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 # /start
