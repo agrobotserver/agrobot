@@ -1,4 +1,6 @@
 import os
+import base64
+
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -8,6 +10,7 @@ from telegram.ext import (
     filters,
     ContextTypes,
 )
+
 from openai import OpenAI
 
 
@@ -31,6 +34,9 @@ def main_menu():
         ],
         [
             InlineKeyboardButton("🐛 Plagas", callback_data="plagas"),
+            InlineKeyboardButton("📸 Analizar imagen", callback_data="imagen"),
+        ],
+        [
             InlineKeyboardButton("🤖 Consultar AgroBot", callback_data="consultar"),
         ],
     ]
@@ -45,7 +51,7 @@ def main_menu():
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         "🌱 ¡Hola! Soy AgroBot, tu asistente agrícola inteligente.\n\n"
-        "Puedo ayudarte con cultivos, riego, plagas y recomendaciones agrícolas.\n\n"
+        "Puedo ayudarte con cultivos, riego, plagas y análisis de imágenes.\n\n"
         "Selecciona una opción o escríbeme directamente tu pregunta:",
         reply_markup=main_menu(),
     )
@@ -61,19 +67,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if query.data == "cultivos":
         text = (
-            "🌱 **Cultivos**\n\n"
+            "🌱 *Cultivos*\n\n"
             "Puedo ayudarte con:\n"
             "• Cuidados de cultivos\n"
             "• Siembra\n"
             "• Fertilización\n"
             "• Condiciones de crecimiento\n\n"
-            "Escribe tu pregunta, por ejemplo:\n"
+            "Ejemplo:\n"
             "¿Qué cuidados necesita el tomate?"
         )
 
     elif query.data == "riego":
         text = (
-            "💧 **Riego**\n\n"
+            "💧 *Riego*\n\n"
             "Puedo ayudarte con recomendaciones sobre:\n"
             "• Frecuencia de riego\n"
             "• Cantidad de agua\n"
@@ -85,16 +91,26 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data == "plagas":
         text = (
-            "🐛 **Plagas y enfermedades**\n\n"
+            "🐛 *Plagas y enfermedades*\n\n"
             "Puedes preguntarme sobre síntomas, posibles causas "
             "y medidas de manejo.\n\n"
-            "Ejemplo:\n"
-            "Las hojas de mi tomate tienen manchas amarillas, ¿qué puede ser?"
+            "También puedes enviarme una foto de la planta "
+            "para realizar un análisis visual."
+        )
+
+    elif query.data == "imagen":
+        text = (
+            "📸 *Análisis de imagen*\n\n"
+            "Envíame una fotografía clara de tu cultivo, hoja o planta "
+            "y AgroBot intentará identificar posibles problemas y "
+            "proporcionarte recomendaciones.\n\n"
+            "⚠️ Para obtener mejores resultados, procura que la imagen "
+            "tenga buena iluminación y que la planta se vea claramente."
         )
 
     elif query.data == "consultar":
         text = (
-            "🤖 **Consultar AgroBot**\n\n"
+            "🤖 *Consultar AgroBot*\n\n"
             "Escribe directamente tu pregunta agrícola y analizaré "
             "la consulta para darte una recomendación."
         )
@@ -102,11 +118,14 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         text = "🌱 Escribe tu consulta agrícola."
 
-    await query.message.reply_text(text)
+    await query.message.reply_text(
+        text,
+        parse_mode="Markdown",
+    )
 
 
 # =========================
-# CONSULTAS A OPENAI
+# CONSULTAS DE TEXTO
 # =========================
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,10 +133,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_message = update.message.text.strip()
     user_message_lower = user_message.lower()
 
-    # Saludos
     greetings = [
         "hola",
-        "hola!",
         "hola!",
         "buenas",
         "buenos dias",
@@ -127,19 +144,18 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "hey",
         "hello",
         "holaa",
-        "holaaa"
+        "holaaa",
     ]
 
     if user_message_lower in greetings:
         await update.message.reply_text(
             "🌱 ¡Hola! Soy AgroBot, tu asistente agrícola inteligente.\n\n"
-            "Puedo ayudarte con cultivos, riego, plagas y recomendaciones agrícolas.\n\n"
+            "Puedo ayudarte con cultivos, riego, plagas y análisis de imágenes.\n\n"
             "Selecciona una opción o escríbeme directamente tu pregunta:",
             reply_markup=main_menu(),
         )
         return
 
-    # Consulta a OpenAI
     try:
         response = client.chat.completions.create(
             model="gpt-4o-mini",
@@ -178,13 +194,95 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # =========================
+# ANÁLISIS DE IMÁGENES
+# =========================
+
+async def handle_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    await update.message.reply_text(
+        "📸 Recibí tu imagen.\n\n"
+        "🔎 Analizando el cultivo, espera un momento..."
+    )
+
+    try:
+        photo = update.message.photo[-1]
+
+        telegram_file = await context.bot.get_file(photo.file_id)
+
+        image_bytes = await telegram_file.download_as_bytearray()
+
+        image_base64 = base64.b64encode(image_bytes).decode("utf-8")
+
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": (
+                        "Eres AgroBot, un asistente agrícola especializado "
+                        "en análisis visual de cultivos. "
+                        "Analiza la imagen proporcionada y describe únicamente "
+                        "lo que puedas observar razonablemente. "
+                        "Indica posibles problemas, síntomas visibles y "
+                        "recomendaciones prácticas. "
+                        "No presentes un diagnóstico como certeza absoluta. "
+                        "Si la imagen no permite identificar el problema, "
+                        "solicita una fotografía más clara."
+                    ),
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": (
+                                "Analiza esta imagen de una planta o cultivo. "
+                                "Indica qué observas, cuáles podrían ser las "
+                                "causas y qué recomendaciones agrícolas "
+                                "podrían ayudar."
+                            ),
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/jpeg;base64,{image_base64}"
+                            },
+                        },
+                    ],
+                },
+            ],
+        )
+
+        reply = response.choices[0].message.content
+
+        await update.message.reply_text(
+            "🌱 *Análisis de AgroBot*\n\n" + reply,
+            parse_mode="Markdown",
+        )
+
+    except Exception as e:
+        print(f"Error analizando imagen: {e}")
+
+        await update.message.reply_text(
+            "⚠️ No pude analizar la imagen en este momento.\n\n"
+            "Intenta nuevamente con una fotografía más clara."
+        )
+
+
+# =========================
 # INICIAR BOT
 # =========================
 
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
+
 app.add_handler(CallbackQueryHandler(button_handler))
+
+app.add_handler(
+    MessageHandler(filters.PHOTO, handle_photo)
+)
+
 app.add_handler(
     MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message)
 )
