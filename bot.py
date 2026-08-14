@@ -8,7 +8,7 @@ from openai import OpenAI
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # Token
-TOKEN = "8909084087:AAEads247ARycSdPPu2IpC0hW3bRQCzDU1g"
+TOKEN = os.getenv("TELEGRAM_TOKEN")
 
 # /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
